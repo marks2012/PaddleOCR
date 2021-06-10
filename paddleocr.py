@@ -176,15 +176,15 @@ def parse_args(mMain=True, add_help=True):
     if mMain:
         parser = argparse.ArgumentParser(add_help=add_help)
         # params for prediction engine
-        parser.add_argument("--use_gpu", type=str2bool, default=True)
+        parser.add_argument("--use_gpu", type=str2bool, default=False)
         parser.add_argument("--ir_optim", type=str2bool, default=True)
         parser.add_argument("--use_tensorrt", type=str2bool, default=False)
-        parser.add_argument("--gpu_mem", type=int, default=8000)
+        parser.add_argument("--gpu_mem", type=int, default=3000)
 
         # params for text detector
-        parser.add_argument("--image_dir", type=str)
+        parser.add_argument("--image_dir", type=str, default='./doc/imgs/')
         parser.add_argument("--det_algorithm", type=str, default='DB')
-        parser.add_argument("--det_model_dir", type=str, default=None)
+        parser.add_argument("--det_model_dir", type=str, default="./inference/ch_ppocr_server_v2.0_det_infer/")
         parser.add_argument("--det_limit_side_len", type=float, default=960)
         parser.add_argument("--det_limit_type", type=str, default='max')
 
@@ -202,7 +202,7 @@ def parse_args(mMain=True, add_help=True):
 
         # params for text recognizer
         parser.add_argument("--rec_algorithm", type=str, default='CRNN')
-        parser.add_argument("--rec_model_dir", type=str, default=None)
+        parser.add_argument("--rec_model_dir", type=str, default='./inference/ch_ppocr_server_v2.0_rec_infer/')
         parser.add_argument("--rec_image_shape", type=str, default="3, 32, 320")
         parser.add_argument("--rec_char_type", type=str, default='ch')
         parser.add_argument("--rec_batch_num", type=int, default=6)
@@ -212,7 +212,7 @@ def parse_args(mMain=True, add_help=True):
         parser.add_argument("--drop_score", type=float, default=0.5)
 
         # params for text classifier
-        parser.add_argument("--cls_model_dir", type=str, default=None)
+        parser.add_argument("--cls_model_dir", type=str, default="./inference/ch_ppocr_mobile_v2.0_cls_infer/")
         parser.add_argument("--cls_image_shape", type=str, default="3, 48, 192")
         parser.add_argument("--label_list", type=list, default=['0', '180'])
         parser.add_argument("--cls_batch_num", type=int, default=6)
@@ -400,7 +400,7 @@ class PaddleOCR(predict_system.TextSystem):
             return rec_res
 
 
-def main():
+if __name__ == '__main__':
     # for cmd
     args = parse_args(mMain=True)
     image_dir = args.image_dir
@@ -408,10 +408,9 @@ def main():
         download_with_progressbar(image_dir, 'tmp.jpg')
         image_file_list = ['tmp.jpg']
     else:
-        image_file_list = get_image_file_list(args.image_dir)
+        image_file_list = get_image_file_list('D:\\work\\pycharm\\doc_parsing\\doc\\imgs')
     if len(image_file_list) == 0:
         logger.error('no images find in {}'.format(args.image_dir))
-        return
 
     ocr_engine = PaddleOCR(**(args.__dict__))
     for img_path in image_file_list:
@@ -420,6 +419,7 @@ def main():
                                 det=args.det,
                                 rec=args.rec,
                                 cls=args.use_angle_cls)
+        print(result)
         if result is not None:
             for line in result:
                 logger.info(line)
