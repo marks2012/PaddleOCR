@@ -9,14 +9,9 @@
 # save the parse result to elastic search and db tables.
 
 from flask import Flask, request, make_response
-from kafka import KafkaConsumer, KafkaProducer
 import json
 import logging
-import requests
-import multiprocessing
-import pandas as pd
 from configparser import ConfigParser
-import os
 import datetime
 
 app = Flask(__name__)
@@ -38,6 +33,10 @@ def hello():
 
 @app.route('/runModel', methods=['POST'])
 def run_model():
+    '''
+    业务逻辑入口，不同的模型代表不同的业务场景，比如执行文件解析，执行项目解析，执行文件指标提取，执行项目指标提取等。
+    执行范围包括：文件解析，解析结果入库，进度更新等。
+    '''
     request_data = request.get_data()
     try:
         context = json.loads(request_data, encodings='utf-8', strict=False)

@@ -8,3 +8,4 @@ lmdb
 tqdm
 numpy
 python-Levenshtein
+py3Fdfs
