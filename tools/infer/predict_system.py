@@ -16,6 +16,9 @@ import sys
 import subprocess
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
+
+import pandas as pd
+
 sys.path.append(__dir__)
 sys.path.append(os.path.abspath(os.path.join(__dir__, '../..')))
 
@@ -33,6 +36,8 @@ import tools.infer.predict_cls as predict_cls
 from ppocr.utils.utility import get_image_file_list, check_and_read_gif
 from ppocr.utils.logging import get_logger
 from tools.infer.utility import draw_ocr_box_txt
+from pandas import DataFrame
+import utils
 
 logger = get_logger()
 
@@ -85,16 +90,36 @@ class TextSystem(object):
             cv2.imwrite("./output/img_crop_%d.jpg" % bno, img_crop_list[bno])
             logger.info(bno, rec_res[bno])
 
-    def __call__(self, img):
+
+
+    def __call__(self, img, image_file):
         ori_im = img.copy()
         dt_boxes, elapse = self.text_detector(img)
+
         logger.info("dt_boxes num : {}, elapse : {}".format(
             len(dt_boxes), elapse))
         if dt_boxes is None:
             return None, None
+
+        # 首先把dt_boxes转换为dataframe
+        dt_boxes_df = utils.box_to_df(dt_boxes)
+        # 检查是否需要旋转：如果dt_boxes大都为竖立长方形，则大概率需要旋转
+        need_rotate = utils.check_rotate(dt_boxes_df)
+        if need_rotate:
+            img = np.rot90(img, axes=(1,0))
+            cv2.imwrite(image_file, img)
+            ori_im = img.copy()
+            dt_boxes, elapse = self.text_detector(img)
+
+            logger.info("dt_boxes num : {}, elapse : {}".format(
+                len(dt_boxes), elapse))
+            if dt_boxes is None:
+                return None, None
+
         img_crop_list = []
 
         dt_boxes = sorted_boxes(dt_boxes)
+
 
         for bno in range(len(dt_boxes)):
             tmp_box = copy.deepcopy(dt_boxes[bno])

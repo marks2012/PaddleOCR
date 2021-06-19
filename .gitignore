@@ -7,7 +7,7 @@ __pycache__/
 # C extensions
 *.so
 
-inference/
+model/inference/
 inference_results/
 output/
 

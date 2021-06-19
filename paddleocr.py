@@ -169,7 +169,7 @@ def parse_args():
     parser.add_argument("--lang", type=str, default='ch')
     parser.add_argument("--det", type=str2bool, default=True)
     parser.add_argument("--rec", type=str2bool, default=True)
-    parser.add_argument("--use_angle_cls", type=str2bool, default=False)
+    parser.add_argument("--use_angle_cls", type=str2bool, default=True)
     return parser.parse_args()
 
 
@@ -232,10 +232,6 @@ class PaddleOCR(predict_system.TextSystem):
             det: use text detection or not, if false, only rec will be exec. default is True
             rec: use text recognition or not, if false, only det will be exec. default is True
         """
-        assert isinstance(img, (np.ndarray, list, str))
-        if isinstance(img, list) and det == True:
-            logger.error('When input a list of images, det must be false')
-            exit(0)
         if cls == False:
             self.use_angle_cls = False
         elif cls == True and self.use_angle_cls == False:
@@ -254,13 +250,10 @@ class PaddleOCR(predict_system.TextSystem):
                 with open(image_file, 'rb') as f:
                     np_arr = np.frombuffer(f.read(), dtype=np.uint8)
                     img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-            if img is None:
-                logger.error("error in loading image:{}".format(image_file))
-                return None
         if isinstance(img, np.ndarray) and len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         if det and rec:
-            dt_boxes, rec_res = self.__call__(img)
+            dt_boxes, rec_res = self.__call__(img, image_file)
             return [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
         elif det and not rec:
             dt_boxes, elapse = self.text_detector(img)
@@ -282,14 +275,8 @@ if __name__ == '__main__':
     # for cmd
     ocr_engine = PaddleOCR()
 
-    image_file_list = get_image_file_list('D:\\work\\pycharm\\doc_parsing\\doc\\imgs')
-    for img_path in image_file_list:
-        logger.info('{}{}{}'.format('*' * 10, img_path, '*' * 10))
-        result = ocr_engine.ocr(img_path,
-                                det=True,
-                                rec=True,
-                                cls=True)
-        print(result)
-        if result is not None:
-            for line in result:
-                logger.info(line)
+    path = './doc/pdf/temp/page-5.png'
+    result = ocr_engine.ocr(path,
+                            det=False,
+                            rec=False,
+                            cls=True)

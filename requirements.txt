@@ -9,3 +9,5 @@ tqdm
 numpy
 python-Levenshtein
 py3Fdfs
+pymupdf
+openpyxl
